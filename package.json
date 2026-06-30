@@ -1,13 +1,19 @@
 {
   "name": "pwa-notifications",
   "version": "1.0.0",
-  "description": "An iOS-installable PWA for subscribing to web push notifications, with an API endpoint to send them.",
-  "type": "commonjs",
+  "private": true,
   "scripts": {
-    "start": "node server.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "gen:vapid": "node scripts/generate-vapid.js",
+    "gen:icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
+    "@upstash/redis": "^1.38.0",
+    "next": "^16.2.9",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "web-push": "^3.6.7"
   }
 }

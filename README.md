@@ -1,33 +1,54 @@
 # Push Notifications PWA
 
-A tiny installable web app (PWA) for **iOS web push**. Add it to your home screen, subscribe to notifications, then trigger them from anywhere with a simple HTTP endpoint.
+A tiny installable web app (PWA) for **iOS web push**, built with **Next.js**. Add it to your home screen, subscribe to notifications, then trigger them from anywhere with a simple HTTP endpoint.
 
-## Run
+- **Framework:** Next.js (App Router), API routes on the Node.js runtime so `web-push` works unchanged.
+- **Storage:** [Upstash Redis](https://upstash.com) — durable, free-tier KV (falls back to an in-memory store in local dev).
+- **Deploy target:** Vercel.
+
+## Local development
 
 ```bash
 npm install
-npm start
+npm run dev        # http://localhost:3000
 ```
 
-The server starts on `http://localhost:3000`. On first run it generates VAPID keys (`data/vapid.json`) and app icons automatically.
+It runs out of the box: with no env vars it uses an in-memory store and ephemeral VAPID keys (fine for clicking through the UI locally). For real push you need stable VAPID keys and Upstash — see below.
+
+## Configuration
+
+Copy `.env.example` to `.env.local` and fill it in:
+
+```bash
+npm run gen:vapid   # prints a VAPID key pair to paste in
+```
+
+| Var | What |
+|-----|------|
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Web Push identity. **Must stay stable** — changing them invalidates every subscription. |
+| `VAPID_CONTACT` | A `mailto:` the push service can reach you at. |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | From your Upstash database's **REST API** section. |
+
+> **Why Redis here?** Upstash Redis is a *durable* managed Redis — every write persists to disk-backed storage and nothing is evicted without a TTL. Our data is a tiny `username → {password, subscription}` KV map, so it's a clean fit. The store lives in `lib/store.js` (3 functions) — swap it for Postgres later if you outgrow KV.
+
+## Deploy to Vercel
+
+1. Create a free **Upstash Redis** database, copy its REST URL + token.
+2. Run `npm run gen:vapid` and keep the output.
+3. Push to GitHub, import the repo in Vercel.
+4. Add all the env vars from the table above to the Vercel project (Production + Preview).
+5. Deploy. Vercel serves over HTTPS, which iOS requires.
 
 ## iOS requirements (important)
 
-iOS only delivers web push to a PWA that has been **added to the home screen** and opened from there (iOS **16.4+**). It also requires the page be served over **HTTPS** (localhost is exempt for desktop testing, but a real iPhone needs HTTPS).
+iOS only delivers web push to a PWA that has been **added to the home screen** and opened from there (iOS **16.4+**), over **HTTPS**. Open the deployed URL in Safari → Share → **Add to Home Screen** → open the app → **Enable notifications**.
 
-For testing on a phone, expose the local server with a tunnel:
-
-```bash
-npx cloudflared tunnel --url http://localhost:3000
-# or: ngrok http 3000
-```
-
-Open the HTTPS URL in Safari → Share → **Add to Home Screen** → open the app → **Enable notifications**.
+(To test against `localhost` from a real iPhone, expose it over HTTPS with `ngrok http 3000` or `npx cloudflared tunnel --url http://localhost:3000`.)
 
 ## How it works
 
-1. The app registers a service worker and creates a push subscription.
-2. You set a **username / password** (saved on the device; reveal with the 👁️ icon at any time). These are bound to your subscription on the server.
+1. The app registers a service worker (`public/sw.js`) and creates a push subscription.
+2. You set a **username / password** (saved on the device; reveal with the 👁️ icon at any time). They're bound to your subscription in the store.
 3. Hitting `POST /api/notify` with those credentials delivers a notification to your device.
 
 ## Endpoint
@@ -38,8 +59,26 @@ Open the HTTPS URL in Safari → Share → **Add to Home Screen** → open the a
 { "username": "you", "password": "secret", "title": "Hello", "body": "World" }
 ```
 
-Credentials may also be passed via HTTP Basic auth. The app shows ready-to-paste `curl` / Python / Node snippets prefilled with your credentials.
+Credentials may also be passed via HTTP Basic auth. The app's UI shows ready-to-paste `curl` / Python / Node snippets prefilled with your credentials.
 
-## Storage
+## Project layout
 
-Credentials and subscriptions live in `data/store.json` (gitignored). This is a single-purpose personal tool — the password acts as an API key for sending notifications.
+```
+app/
+  page.js                       UI (client component)
+  layout.js                     PWA metadata
+  api/vapid-public-key/route.js
+  api/subscribe/route.js
+  api/notify/route.js
+lib/
+  vapid.js                      web-push config + public key
+  store.js                      Upstash KV (with in-memory dev fallback)
+public/
+  sw.js  manifest.json  icons/
+scripts/
+  generate-vapid.js  generate-icons.js
+```
+
+## Note on the password
+
+It's stored as-is and acts as the API key for sending notifications — appropriate for this single-purpose personal tool, but not credential hygiene you'd want in a multi-user service.

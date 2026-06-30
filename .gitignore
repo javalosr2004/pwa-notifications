@@ -1,3 +1,14 @@
+# dependencies
 node_modules/
-data/
-public/icons/
+
+# next.js
+.next/
+out/
+
+# env (keep .env.example)
+.env
+.env.local
+.env*.local
+
+# misc
+.DS_Store
