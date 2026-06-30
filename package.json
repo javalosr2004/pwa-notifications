@@ -1,0 +1,13 @@
+{
+  "name": "pwa-notifications",
+  "version": "1.0.0",
+  "description": "An iOS-installable PWA for subscribing to web push notifications, with an API endpoint to send them.",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "web-push": "^3.6.7"
+  }
+}

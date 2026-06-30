@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Push Notifications</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#6366f1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Notify" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #131a2e;
+      --panel-2: #0f1626;
+      --border: #26304a;
+      --text: #e7ecf5;
+      --muted: #8a94ab;
+      --accent: #6366f1;
+      --accent-2: #818cf8;
+      --good: #22c55e;
+      --bad: #ef4444;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(1200px 600px at 50% -10%, #1b2542 0%, var(--bg) 55%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: calc(env(safe-area-inset-top) + 28px) 18px calc(env(safe-area-inset-bottom) + 40px);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 560px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .brand .logo {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid; place-items: center; font-size: 22px;
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+    }
+    h1 { font-size: 22px; margin: 0; letter-spacing: -0.02em; }
+    .sub { color: var(--muted); font-size: 14px; margin: 2px 0 24px; }
+
+    .card {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .step { display: flex; gap: 12px; }
+    .num {
+      flex: 0 0 26px; height: 26px; border-radius: 50%;
+      background: rgba(99,102,241,0.15); color: var(--accent-2);
+      display: grid; place-items: center; font-size: 13px; font-weight: 700;
+      border: 1px solid rgba(99,102,241,0.35);
+    }
+    .step h2 { font-size: 15px; margin: 2px 0 6px; }
+    .step p { margin: 0; color: var(--muted); font-size: 14px; }
+    .step .kbd {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #0a0f1e; border: 1px solid var(--border); border-radius: 8px;
+      padding: 2px 7px; font-size: 13px; color: var(--text);
+    }
+
+    label { display: block; font-size: 13px; color: var(--muted); margin: 14px 0 6px; }
+    .field { position: relative; display: flex; align-items: center; }
+    input[type=text], input[type=password] {
+      width: 100%; background: #0a0f1e; border: 1px solid var(--border);
+      color: var(--text); border-radius: 10px; padding: 12px 14px; font-size: 15px;
+      outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+    .eye {
+      position: absolute; right: 6px; background: transparent; border: 0; cursor: pointer;
+      color: var(--muted); font-size: 18px; padding: 8px; line-height: 1;
+    }
+    .eye:hover { color: var(--text); }
+
+    button.btn {
+      width: 100%; border: 0; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: transform .05s, opacity .15s, background .15s; margin-top: 16px;
+    }
+    button.btn:active { transform: scale(0.99); }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; }
+    .btn-ghost { background: #0a0f1e; color: var(--text); border: 1px solid var(--border) !important; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .status { font-size: 13px; margin-top: 10px; min-height: 18px; }
+    .status.good { color: var(--good); }
+    .status.bad { color: var(--bad); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
+      padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted);
+    }
+    .pill.on { color: var(--good); border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.08); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+    .tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+    .tab {
+      background: #0a0f1e; border: 1px solid var(--border); color: var(--muted);
+      padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer;
+    }
+    .tab.active { color: var(--text); border-color: var(--accent); background: rgba(99,102,241,0.12); }
+    pre {
+      background: #060a14; border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px; overflow-x: auto; font-size: 12.5px; margin: 0;
+      font-family: "SF Mono", ui-monospace, Menlo, monospace; color: #cdd6f4;
+    }
+    .code-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .copy { background: transparent; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+    .copy:hover { color: var(--text); }
+    .hidden { display: none !important; }
+    a { color: var(--accent-2); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo">🔔</div>
+      <div>
+        <h1>Push Notifications</h1>
+      </div>
+    </div>
+    <p class="sub">Install this app, subscribe, and send yourself notifications from anywhere via a simple API.</p>
+
+    <!-- iOS install instructions (hidden once running as an installed app) -->
+    <div class="card" id="installCard">
+      <div class="step">
+        <div class="num">1</div>
+        <div>
+          <h2>Add to Home Screen</h2>
+          <p>
+            In Safari, tap the <span class="kbd">Share ⬆️</span> button, then choose
+            <span class="kbd">Add to Home Screen</span>. Open the app from your home screen
+            to continue. <em>(Required on iOS for push to work — iOS 16.4+.)</em>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscribe + credentials -->
+    <div class="card">
+      <div class="row" style="margin-bottom: 6px;">
+        <div class="step" style="flex:1;">
+          <div class="num">2</div>
+          <div>
+            <h2>Subscribe & set credentials</h2>
+            <p>Pick a username and password — you'll use them to send notifications.</p>
+          </div>
+        </div>
+        <span class="pill" id="subStatus"><span class="dot"></span>Off</span>
+      </div>
+
+      <label for="username">username</label>
+      <div class="field">
+        <input type="text" id="username" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. jesus" />
+      </div>
+
+      <label for="password">password</label>
+      <div class="field">
+        <input type="password" id="password" autocomplete="off" autocapitalize="off" spellcheck="false" />
+        <button class="eye" id="toggleEye" type="button" aria-label="Reveal password" title="Reveal password">👁️</button>
+      </div>
+
+      <button class="btn btn-primary" id="subscribeBtn">Enable notifications</button>
+      <div class="status" id="subMsg"></div>
+
+      <button class="btn btn-ghost hidden" id="testBtn">Send a test notification</button>
+    </div>
+
+    <!-- Code snippets -->
+    <div class="card">
+      <div class="step" style="margin-bottom: 12px;">
+        <div class="num">3</div>
+        <div>
+          <h2>Hit the endpoint</h2>
+          <p>Run any of these to push a notification to your device.</p>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-lang="curl">curl</button>
+        <button class="tab" data-lang="python">python</button>
+        <button class="tab" data-lang="node">node.js</button>
+      </div>
+      <div class="code-head">
+        <span style="font-size:12px;color:var(--muted);" id="endpointLabel"></span>
+        <button class="copy" id="copyBtn">Copy</button>
+      </div>
+      <pre><code id="snippet"></code></pre>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
