@@ -27,17 +27,16 @@ npm run gen:vapid   # prints a VAPID key pair to paste in
 |-----|------|
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Web Push identity. **Must stay stable** — changing them invalidates every subscription. |
 | `VAPID_CONTACT` | A `mailto:` the push service can reach you at. |
-| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | From your Upstash database's **REST API** section. |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | From your Upstash database's **REST API** section. On Vercel, the native Upstash integration injects these for you — no manual setup. |
 
 > **Why Redis here?** Upstash Redis is a *durable* managed Redis — every write persists to disk-backed storage and nothing is evicted without a TTL. Our data is a tiny `username → {password, subscription}` KV map, so it's a clean fit. The store lives in `lib/store.js` (3 functions) — swap it for Postgres later if you outgrow KV.
 
 ## Deploy to Vercel
 
-1. Create a free **Upstash Redis** database, copy its REST URL + token.
-2. Run `npm run gen:vapid` and keep the output.
-3. Push to GitHub, import the repo in Vercel.
-4. Add all the env vars from the table above to the Vercel project (Production + Preview).
-5. Deploy. Vercel serves over HTTPS, which iOS requires.
+1. Import the repo in Vercel.
+2. Add an **Upstash Redis** database via the project's **Storage** tab (native integration) — it injects `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` automatically.
+3. Run `npm run gen:vapid` and add the three `VAPID_*` vars to the project's Environment Variables (Production + Preview).
+4. Deploy. Vercel serves over HTTPS, which iOS requires.
 
 ## iOS requirements (important)
 
